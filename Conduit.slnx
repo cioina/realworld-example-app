@@ -19,6 +19,7 @@
         <Project Path="src\Conduit\Conduit.csproj" />
     </Folder>
     <Folder Name="/tests/">
+        <Project Path="tests/Conduit.Test/Conduit.Test.csproj" />
         <Project Path="tests\Conduit.IntegrationTests\Conduit.IntegrationTests.csproj" />
     </Folder>
     <Project Path="../../project/dotnet10/DotNetVendors/AspNetCoreRateLimit/src/AspNetCoreRateLimit/AspNetCoreRateLimit.csproj" />
