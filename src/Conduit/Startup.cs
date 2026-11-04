@@ -16,6 +16,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System.Security.Claims;
+using Conduit.Features.Users;
 
 #if DEBUG
 using NSwag.Generation.Processors.Contexts;
@@ -132,7 +137,7 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
 
         services.AddJwt(Configuration);
         services.AddAuthorization();
-
+ 
 #if DEBUG
         services
         .AddOpenApiDocument((configure, sp) =>
@@ -149,18 +154,24 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
     {
         app.UseMiddleware<ErrorHandlingMiddleware>();
 
-        //// Enable middleware to serve generated Swagger as a JSON endpoint
-        //app.UseSwagger(c => c.RouteTemplate = "swagger/{documentName}/swagger.json");
+        // Enable middleware to serve generated Swagger as a JSON endpoint
+        app.UseSwagger(c => c.RouteTemplate = "swagger/{documentName}/swagger.json");
 
-        //// Enable middleware to serve swagger-ui assets(HTML, JS, CSS etc.)
-        //app.UseSwaggerUI(x => x.SwaggerEndpoint("/swagger/v1/swagger.json", "RealWorld API V1"));
+        // Enable middleware to serve swagger-ui assets(HTML, JS, CSS etc.)
+        app.UseSwaggerUI(x => x.SwaggerEndpoint("/swagger/v1/swagger.json", "RealWorld API V1"));
 
-        //if (Configuration.GetValue("Database:ApplyMigrations", true))
-        //{
-        //    using var scope = app.Services.CreateScope();
-        //    var dbContext = scope.ServiceProvider.GetRequiredService<ConduitContext>();
-        //    await DatabaseInitializer.InitializeAsync(dbContext);
-        //}
+        if (Configuration.GetValue("Database:ApplyMigrations", true))
+        {
+            Task
+            .Run(async () =>
+            {
+                using var scope = app.ApplicationServices.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<ConduitContext>();
+                await DatabaseInitializer.InitializeAsync(dbContext);
+            })
+            .GetAwaiter()
+            .GetResult();
+        }
 
         app
         .UseForwardedHeaders(new ForwardedHeadersOptions

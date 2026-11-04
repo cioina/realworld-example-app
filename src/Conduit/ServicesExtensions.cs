@@ -254,19 +254,19 @@ public static class ServicesExtensions
         return false;
     }
 
-    public static void AddSerilogLogging(this ILoggerFactory loggerFactory)
-    {
-        // Attach the sink to the logger configuration
-        var log = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .Enrich.FromLogContext()
-            //just for local debug
-            .WriteTo.Console(
-                outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] {SourceContext} {Message}{NewLine}{Exception}",
-                theme: AnsiConsoleTheme.Code
-            )
-            .CreateLogger();
+    //public static void AddSerilogLogging(this ILoggerFactory loggerFactory)
+    //{
+    //    // Attach the sink to the logger configuration
+    //    var log = new LoggerConfiguration()
+    //        .MinimumLevel.Verbose()
+    //        .Enrich.FromLogContext()
+    //        //just for local debug
+    //        .WriteTo.Console(
+    //            outputTemplate: "{Timestamp:HH:mm:ss} [{Level}] {SourceContext} {Message}{NewLine}{Exception}",
+    //            theme: AnsiConsoleTheme.Code
+    //        )
+    //        .CreateLogger();
 
-        loggerFactory.AddSerilog(log, dispose: true);
-    }
+    //    loggerFactory.AddSerilog(log, dispose: true);
+    //}
 }
