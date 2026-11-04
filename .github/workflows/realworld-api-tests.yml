@@ -1,0 +1,69 @@
+name: RealWorld API Tests
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # weekly canary against the upstream spec HEAD, to surface drift before the
+    # Dependabot submodule bump PR does
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hurl:
+    name: Hurl API spec tests
+    runs-on: ubuntu-24.04  # hurl 8.x tarball needs libxml2.so.2, absent from Ubuntu 26.04 (ubuntu-latest)
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+    - uses: actions/setup-dotnet@v6
+      with:
+        global-json-file: global.json
+    - run: dotnet restore Conduit.slnx --locked-mode
+    - name: Install Hurl
+      run: bash scripts/install-hurl.sh
+    - name: Run Hurl tests
+      run: make test-hurl-with-managed-server
+
+  bruno:
+    name: Bruno API spec tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+    - uses: actions/setup-dotnet@v6
+      with:
+        global-json-file: global.json
+    - run: dotnet restore Conduit.slnx --locked-mode
+    - uses: oven-sh/setup-bun@v2
+    - name: Run Bruno tests
+      run: make test-bruno-with-managed-server
+
+  # runs the hurl suite from the upstream spec HEAD instead of the pinned submodule commit:
+  # a failure here means the spec moved and the pin (or the implementation) needs updating
+  hurl-upstream-canary:
+    name: Hurl API spec tests (upstream HEAD)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04  # hurl 8.x tarball needs libxml2.so.2, absent from Ubuntu 26.04 (ubuntu-latest)
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+    - name: Update spec to upstream HEAD
+      run: git submodule update --remote realworld
+    - uses: actions/setup-dotnet@v6
+      with:
+        global-json-file: global.json
+    - run: dotnet restore Conduit.slnx --locked-mode
+    - name: Install Hurl
+      run: bash scripts/install-hurl.sh
+    - name: Run Hurl tests
+      run: make test-hurl-with-managed-server

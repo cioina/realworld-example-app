@@ -1,0 +1,91 @@
+using System;
+using System.Linq;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using Conduit.Infrastructure;
+using Conduit.Infrastructure.Errors;
+using Conduit.Infrastructure.Security;
+using FluentValidation;
+using Mediator;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
+namespace Conduit.Features.Users;
+
+public class Login
+{
+    public class UserData
+    {
+        public string? Email { get; init; }
+
+        public string? Password { get; init; }
+    }
+
+    public record Command(UserData User) : IRequest<UserEnvelope>;
+
+    public class CommandValidator : AbstractValidator<Command>
+    {
+        public CommandValidator()
+        {
+            RuleFor(x => x.User).NotNull();
+            When(
+                x => x.User != null,
+                () =>
+                {
+                    RuleFor(x => x.User.Email)
+                        .Cascade(CascadeMode.Stop)
+                        .NotEmpty()
+                        .WithMessage(Constants.BLANK)
+                        .EmailAddress()
+                        .WithMessage(Constants.INVALID);
+                    RuleFor(x => x.User.Password).NotEmpty().WithMessage(Constants.BLANK);
+                }
+            );
+        }
+    }
+
+    public class Handler(
+        ConduitContext context,
+        IPasswordHasher passwordHasher,
+        IJwtTokenGenerator jwtTokenGenerator,
+        ConduitMapper mapper
+    ) : IRequestHandler<Command, UserEnvelope>
+    {
+        public async ValueTask<UserEnvelope> Handle(
+            Command message,
+            CancellationToken cancellationToken
+        )
+        {
+            var person = await context
+                .Persons.Where(x => x.Email == message.User.Email)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (person == null)
+            {
+                throw new RestException(HttpStatusCode.Unauthorized, "credentials", "invalid");
+            }
+
+            var verification = passwordHasher.Verify(
+                message.User.Password ?? throw new InvalidOperationException(),
+                person.Hash,
+                person.Salt
+            );
+
+            if (verification == PasswordVerificationResult.Failed)
+            {
+                throw new RestException(HttpStatusCode.Unauthorized, "credentials", "invalid");
+            }
+
+            if (verification == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                person.Hash = await passwordHasher.Hash(message.User.Password, []);
+                person.Salt = [];
+                await context.SaveChangesAsync(cancellationToken);
+            }
+
+            var user = mapper.PersonToUser(person);
+            user.Token = jwtTokenGenerator.CreateToken(person.PersonId);
+            return new UserEnvelope(user);
+        }
+    }
+}
