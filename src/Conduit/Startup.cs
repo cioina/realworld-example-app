@@ -133,11 +133,6 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         services.AddJwt(Configuration);
         services.AddAuthorization();
 
-        //.AddDomain()
-        //.AddApplication(this.Configuration)
-        //.AddInfrastructure(this.Configuration, this.Environment)
-        //.AddWebComponents();
-
 #if DEBUG
         services
         .AddOpenApiDocument((configure, sp) =>
@@ -152,7 +147,6 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
     #region Configure
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
-
         app.UseMiddleware<ErrorHandlingMiddleware>();
 
         //// Enable middleware to serve generated Swagger as a JSON endpoint
@@ -166,20 +160,6 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
         //    using var scope = app.Services.CreateScope();
         //    var dbContext = scope.ServiceProvider.GetRequiredService<ConduitContext>();
         //    await DatabaseInitializer.InitializeAsync(dbContext);
-        //}
-
-        //app.UseMiddleware<ValidationExceptionHandlerMiddleware>();
-
-        //if (env.EnvironmentName == "Test" || env.EnvironmentName == "Development")
-        //{
-        //    app.UseStaticFiles();
-        //}
-        //else
-        //{
-        //    app.UseStaticFiles(new StaticFileOptions
-        //    {
-        //        FileProvider = new PhysicalFileProvider(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot"))
-        //    });
         //}
 
         app
@@ -220,37 +200,8 @@ public class Startup(IConfiguration configuration, IWebHostEnvironment environme
           {
               endpoints.MapDefaultControllerRoute();
           });
-        //.Use(async (context, next) =>
-        //  {
-        //      await next();
-
-        //      if (context.Response.StatusCode == 404 && !context.Response.HasStarted)
-        //      {
-        //          var cacheMaxAge = 0;// 86400;// 1 day
-        //          // Set Last-Modified header
-        //          var lastModifiedDate = DateTime.UtcNow;
-        //          context.Response.Headers.LastModified = lastModifiedDate.ToString("R");
-
-        //          // Set cache control headers
-        //          context.Response.Headers.CacheControl = $"public, max-age={cacheMaxAge}";
-        //          context.Response.Headers.Expires = DateTime.UtcNow.AddSeconds(cacheMaxAge).ToString("R");
-
-        //          await context.Response.WriteAsync(GetIndexTemplate());
-        //      }
-        //  })
-        //.InitializeDb();
     }
     #endregion Configure
 
-    //private static string GetIndexTemplate()
-    //{
-    //    var assembly = Assembly.GetExecutingAssembly();
-    //    string[] names = assembly.GetManifestResourceNames();
-    //    var baseTemplateStream = assembly.GetManifestResourceStream(names[0]);
-    //    using var baseReader = new StreamReader(baseTemplateStream!, Encoding.UTF8);
-    //    var baseTemplate = baseReader.ReadToEnd();
-
-    //    return baseTemplate;
-    //}
 }
-    #endregion Startup
+#endregion Startup
