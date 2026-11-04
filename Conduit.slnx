@@ -1,6 +1,6 @@
-﻿<Solution>
+<Solution>
     <Folder Name="/build/">
-        <Project Path="build\build.csproj" Type="Classic C#" />
+        <Project Path="build\build.csproj" />
     </Folder>
     <Folder Name="/config/">
         <File Path="Directory.Packages.props" />
@@ -16,12 +16,11 @@
         <File Path=".rules4rc" />
     </Folder>
     <Folder Name="/src/">
-        <Project Path="src\Conduit\Conduit.csproj" Type="Classic C#" />
+        <Project Path="src\Conduit\Conduit.csproj" />
     </Folder>
     <Folder Name="/tests/">
-        <Project
-            Path="tests\Conduit.IntegrationTests\Conduit.IntegrationTests.csproj"
-            Type="Classic C#"
-        />
+        <Project Path="tests\Conduit.IntegrationTests\Conduit.IntegrationTests.csproj" />
     </Folder>
+    <Project Path="../../project/dotnet10/DotNetVendors/AspNetCoreRateLimit/src/AspNetCoreRateLimit/AspNetCoreRateLimit.csproj" />
+    <Project Path="../../project/dotnet10/DotNetVendors/AsyncKeyedLock/AsyncKeyedLock/AsyncKeyedLock.csproj" />
 </Solution>
