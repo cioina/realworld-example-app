@@ -94,33 +94,42 @@ public static class ServicesExtensions
     {
         services.AddOptions();
 
-        //byte[] key;
-        //try
-        //{
-        //    key = Convert.FromBase64String(configuration["ApplicationSettings:SecurityTokenDescriptorKey"] ?? "");
-        //}
-        //catch (FormatException)
-        //{
-        //    throw new InvalidOperationException(
-        //        $"Jwt:SigningKey must be a base64-encoded random key of at least 32 bytes: {configuration["ApplicationSettings:SecurityTokenDescriptorKey"]}"
-        //    );
-        //}
-        //if (
-        //    key.Length < 32
-        //    || key.Distinct().Count() < 16
-        //    || Encoding
-        //        .UTF8.GetString(key)
-        //        .Contains("somethinglongerforthisdumbalgorithmisrequired", StringComparison.Ordinal)
-        //    || HasRepeatedPattern(key)
-        //)
-        //{
-        //    throw new InvalidOperationException(
-        //        $"Jwt:SigningKey must be a base64-encoded random key of at least 32 bytes; default and placeholder keys are not allowed.{configuration["ApplicationSettings:SecurityTokenDescriptorKey"]}"
-        //    );
-        //}
+        //var originalText = configuration["Jwt:SigningKey"]!;
+
+        //// 1. Convert string to byte array
+        //var textBytes = Encoding.UTF8.GetBytes(originalText);
+
+        //// 2. Encode to Base64 String
+        //var base64String = Convert.ToBase64String(textBytes);
+        //Console.WriteLine($"Encoded: {base64String}");
+
+        byte[] key;
+        try
+        {
+            key = Convert.FromBase64String(configuration["Jwt:SigningKey"] ?? "");
+        }
+        catch (FormatException)
+        {
+            throw new InvalidOperationException(
+                $"Jwt:SigningKey must be a base64-encoded random key of at least 32 bytes: {configuration["Jwt:SigningKey"]}"
+            );
+        }
+        if (
+            key.Length < 32
+            || key.Distinct().Count() < 16
+            || Encoding
+                .UTF8.GetString(key)
+                .Contains("somethinglongerforthisdumbalgorithmisrequired", StringComparison.Ordinal)
+            || HasRepeatedPattern(key)
+        )
+        {
+            throw new InvalidOperationException(
+                $"Jwt:SigningKey must be a base64-encoded random key of at least 32 bytes; default and placeholder keys are not allowed.{configuration["Jwt:SigningKey"]}"
+            );
+        }
 
         var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(
-            configuration["ApplicationSettings:SecurityTokenDescriptorKey"]!.PadRight((256 / 8), '\0')));
+            configuration["Jwt:SigningKey"]!.PadRight((256 / 8), '\0')));
         var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
         var issuer = "issuer";
         var audience = "audience";
@@ -220,30 +229,30 @@ public static class ServicesExtensions
             });
     }
 
-    //private static bool HasRepeatedPattern(byte[] key)
-    //{
-    //    for (var period = 1; period <= key.Length / 2; period++)
-    //    {
-    //        var isRepeated = true;
-    //        for (var index = period; index < key.Length; index++)
-    //        {
-    //            if (key[index] == key[index % period])
-    //            {
-    //                continue;
-    //            }
+    private static bool HasRepeatedPattern(byte[] key)
+    {
+        for (var period = 1; period <= key.Length / 2; period++)
+        {
+            var isRepeated = true;
+            for (var index = period; index < key.Length; index++)
+            {
+                if (key[index] == key[index % period])
+                {
+                    continue;
+                }
 
-    //            isRepeated = false;
-    //            break;
-    //        }
+                isRepeated = false;
+                break;
+            }
 
-    //        if (isRepeated)
-    //        {
-    //            return true;
-    //        }
-    //    }
+            if (isRepeated)
+            {
+                return true;
+            }
+        }
 
-    //    return false;
-    //}
+        return false;
+    }
 
     public static void AddSerilogLogging(this ILoggerFactory loggerFactory)
     {
